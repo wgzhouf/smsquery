@@ -9,8 +9,8 @@ from http.server import HTTPServer, CGIHTTPRequestHandler
 def getserver(name='', port=80):
     """
     创建服务器
-    :param name:
-    :param port:
+    :param name:域名
+    :param port:端口
     :return:
     """
     webdir = os.path.join('.', 'webroot')
