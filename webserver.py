@@ -7,6 +7,12 @@ from http.server import HTTPServer, CGIHTTPRequestHandler
 
 
 def getserver(name='', port=80):
+    """
+    创建服务器
+    :param name:
+    :param port:
+    :return:
+    """
     webdir = os.path.join('.', 'webroot')
     print("webdir: \"%\", port: %s", (webdir, port))
     os.chdir(webdir)
