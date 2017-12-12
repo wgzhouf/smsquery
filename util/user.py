@@ -10,6 +10,11 @@ VIP_LISTS = {'10.240.80.31': {'NAME': '周峰', 'KEY': '68gk#$%3577dghvj3fg64'},
 
 
 def isVIP(IP=''):
+    """
+    判断是否是登记在册的IP
+    :param IP:
+    :return:
+    """
     try:
         if VIP_LISTS[IP]:
             return True
