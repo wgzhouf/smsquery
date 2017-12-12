@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>hello</title>
+    <link rel="stylesheet" href="/css/jquery-ui.min.css">
+    <script type="text/javascript" src="/jquery/jquery-3.2.1.min.js"></script>
+    <script type="text/javascript" src="/jquery/jquery-ui.min.js"></script>
+    <script type="text/javascript">
+    var TotalSMSQueryListsNumber = 0
+
+    function toJSON(str){
+        var obj = JSON.parse(str)
+        return obj;
+    }
+
+    function genSMSContentsBody(data){
+        var str = ""
+        for (var i=0; i<data.length;i++){
+            str += "<tr>" +
+            "<td>" + data[i].sendtime + "</td>" +
+            "<td>" + data[i].phonenamber + "</td>" +
+            "<td>" + data[i].content + "</td>" +
+            "<td><a href=\"#\" onclick=\"querysmsdetail(\'" + data[i].smsid + "\')\">" + data[i].sucsmstotal +"/" + data[i].smstotal + "</a></td>" +
+            "</tr>"
+        }
+        return str;
+    }
+
+    function genSMSDetailBody(data){
+        var str = ""
+        for (var i=0; i<data.length;i++){
+            str += "<tr>" +
+            "<td>" + (i+1) + "</td>" +
+            "<td>" + data[i].phonenumber + "</td>" +
+            "<td>" + data[i].errorcode + "</td>" +
+            "</tr>"
+        }
+        return str;
+    }
+
+    function resetQueryView(){
+        $("#top").attr("disabled", true);
+        $("#previous").attr("disabled", true);
+        $("#next").attr("disabled", true);
+        $("#tail").attr("disabled", true);
+        $("#result-tbody").empty();
+    }
+
+    function setupQueryButton(page){
+        $("#top").attr("disabled", false);
+        $("#previous").attr("disabled", false);
+        $("#next").attr("disabled", false);
+        $("#tail").attr("disabled", false);
+
+        $("#top").val(1)
+
+        if(page > 1)
+            $("#previous").val(page-1);
+        else{
+            $("#previous").val(1);
+            $("#previous").attr("disabled", true);
+            }
+
+        if(page < TotalSMSQueryListsNumber)
+            $("#next").val(page-0+1)
+        else{
+            $("#next").val(TotalSMSQueryListsNumber)
+            $("#next").attr("disabled", true);
+            }
+
+        $("#tail").val(TotalSMSQueryListsNumber)
+    }
+
+    function statusloading(){
+        $("#querystatus").attr("hidden", false);
+    }
+
+    function statusfinish(){
+        $("#querystatus").attr("hidden", true);
+    }
+
+    function login(key){
+        if (key == ""){
+            alert("请输入key");
+            return false;
+        }
+        $.ajax({
+            type:"post",
+            dataType:"text",
+            timeout: 5000,
+            url:"/bin/login.py",
+            data:{
+                key:key
+            },
+            success: function(msg){
+                var response = toJSON(msg);
+                if (response.code=="200"){
+                    $("#loginform").attr("hidden", true);
+                    $("#welcome").html("欢迎回来，"+response.name);
+                    $("#welcome").attr("hidden", false);
+                    $("#form1").attr("hidden", false);
+                    $("#resultblock").attr("hidden", false);
+                    $("#token").html(response.token);
+                    return true;
+                }
+                else{
+                    alert("请联系管理员");
+                    return false;
+                 }
+            },
+            error: function(){
+                alert("打烊");
+                return false;
+            }
+        });
+    }
+
+    function querySmsLists(account,accountnumber,starttime, endtime, pagenumber){
+        statusloading();
+        var token = $("#token").html()+"";
+        var startindex = (pagenumber-1)*10+1;
+        var endindex = (pagenumber-1)*10+10;
+        $.ajax({
+                type:"post",
+                timeout: 5000,
+                dataType:"text",
+                url:"/bin/querysmscontents.py",
+                data:{
+                    account:account,
+                    accountnumber:accountnumber,
+                    starttime:starttime,
+                    endtime:endtime,
+                    startindex:startindex,
+                    endindex:endindex,
+                    token:token
+                },
+                success: function(msg){
+                    if (msg){
+                        statusfinish();
+                        var response = toJSON(msg);
+                        if(response.totalnumber == 0){
+                            resetQueryView();
+                            alert("没有短信记录!")
+                        }
+                        else{
+                            $("#totalnumber").html(response.totalnumber);
+                            TotalSMSQueryListsNumber = Math.ceil(response.totalnumber/10);
+                            setupQueryButton(pagenumber);
+                            var body = genSMSContentsBody(response.smslists);
+                            $("#result-tbody").empty();
+                            $("#result-tbody").append(body);
+                        }
+                    }
+                },
+                error: function(){
+                    alert("查询失败");
+                }
+            });
+    }
+
+    function querysmsdetail(smsid){
+        statusloading();
+        var token = $("#token").html()+"";
+        var account = $("#account").val()+"";
+        var accountNumber = $("#accountnumber").val()+"";
+        var startTime = $("#starttime").val()+"";
+        $.ajax({
+            type:"post",
+            timeout: 5000,
+            dataType:"text",
+            url:"/bin/querysmsdetails.py",
+            data:{
+                account:account,
+                accountnumber:accountNumber,
+                starttime:startTime,
+                smsid:smsid,
+                token:token
+            },
+            success: function(msg){
+                if (msg){
+                    statusfinish();
+                    var response = toJSON(msg);
+                    var body = genSMSDetailBody(response.smsdetaillists);
+                    $("#smsdetail-body").empty();
+                    $("#smsdetail-body").append(body);
+                    $("#detailblock").dialog({
+                        height: 400,
+                        width: 400,
+                        buttons:{
+                            "关闭":function(){$(this).dialog('close');}
+                        }
+                    });
+                }
+                else
+                    alert("响应失败，请再查询一次");
+            },
+            error: function(){
+                alert("查询失败");
+            }
+        });
+    }
+
+    function isFormCorrect(){
+        var account = $("#account").val();
+        var accountNumber = $("#accountnumber").val();
+        var startTime = $("#starttime").val();
+        var endTime = $("#endtime").val();
+        var reg_account=/^[a-z,A-Z,0-9,.]+$/;
+        var reg_accountnumber=/^[0-9]+$/;
+        var reg_date=/^\d{4}-\d{2}-\d{2}$/;
+
+        if(!reg_account.test(account)){
+            alert("协同通信账号不正确，请重新输入");
+            return false;
+        }
+
+        if(!reg_accountnumber.test(accountNumber)){
+            alert("业务号码不正确，请重新输入");
+            return false;
+        }
+
+        if(!reg_date.test(startTime)){
+            alert("请填写正确的开始时间");
+            return false;
+        }
+
+        if(!reg_date.test(endTime)){
+            alert("请填写正确的结束时间");
+            return false;
+        }
+        var st = startTime.replace(/-/g,"/");
+        var ed = endTime.replace(/-/g,"/");
+        var days = (Date.parse(ed)-Date.parse(st))/(24*60*60*1000);
+        if(days > 30){
+            alert("请不要查询超过30天");
+            return false;
+        }
+        return true;
+    }
+
+    $(document).ready(function(){
+        $( "#starttime" ).datepicker();
+        $( "#starttime" ).datepicker( "option", "dateFormat", "yy-mm-dd" );
+
+        $( "#endtime" ).datepicker();
+        $( "#endtime" ).datepicker( "option", "dateFormat", "yy-mm-dd" );
+
+        $("#q2").click(function(){
+            var key = $("#loginkey").val();
+            login(key);
+        });
+
+        $("#q1").click(function(){
+            var account = $("#account").val();
+            var accountNumber = $("#accountnumber").val();
+            var startTime = $("#starttime").val();
+            var endTime = $("#endtime").val();
+            var pageNumber = 1
+            if (isFormCorrect())
+                querySmsLists(account,accountNumber,startTime, endTime, pageNumber)
+        });
+
+        $("#top").click(function(){
+            var account = $("#account").val();
+            var accountNumber = $("#accountnumber").val();
+            var startTime = $("#starttime").val();
+            var endTime = $("#endtime").val();
+            var pageNumber = $("#top").val();
+            if (isFormCorrect())
+                querySmsLists(account,accountNumber,startTime, endTime, pageNumber)
+        });
+
+        $("#previous").click(function(){
+            var account = $("#account").val();
+            var accountNumber = $("#accountnumber").val();
+            var startTime = $("#starttime").val();
+            var endTime = $("#endtime").val();
+            var pageNumber = $("#previous").val();
+            if (isFormCorrect())
+                querySmsLists(account,accountNumber,startTime, endTime, pageNumber)
+        });
+
+        $("#next").click(function(){
+            var account = $("#account").val();
+            var accountNumber = $("#accountnumber").val();
+            var startTime = $("#starttime").val();
+            var endTime = $("#endtime").val();
+            var pageNumber = $("#next").val();
+            if (isFormCorrect())
+                querySmsLists(account,accountNumber,startTime, endTime, pageNumber)
+        });
+
+        $("#tail").click(function(){
+            var account = $("#account").val();
+            var accountNumber = $("#accountnumber").val();
+            var startTime = $("#starttime").val();
+            var endTime = $("#endtime").val();
+            var pageNumber = $("#tail").val();
+            if (isFormCorrect())
+                querySmsLists(account,accountNumber,startTime, endTime, pageNumber)
+        });
+    });
+
+    </script>
+</head>
+<body>
+<div id="welcome" hidden="true"></div>
+<div id="loginform"><b>请输入key</b><input type="text" id="loginkey" class="text ui-widget-content"><button type="submit" id="q2">提交</button></div>
+<div id="form1" hidden="true">
+    <p><h1>短信历史记录查询</h1></p>
+    <p><b>协同通信账号</b><input type="text" id="account" name="account" class="text ui-widget-content"/></p>
+    <p><b>业务号码</b><input type="text" id="accountnumber" name="accountnumber" class="text ui-widget-content"/></p>
+    <p><b>开始时间</b><input type="text" id="starttime" name="starttime" class="text ui-widget-content"/></p>
+    <p><b>结束时间</b><input type="text" id="endtime" name="endtime" class="text ui-widget-content"/></p>
+    <button type="submit" id="q1" class="ui-button ui-widget">查询</button> <div id="querystatus" style="color:red" hidden="true">正在查询中。。。。</div>
+</div>
+<div id="resultblock" class="ui-widget" hidden="true">
+    共计：&nbsp<b id="totalnumber"></b>&nbsp条，每页显示10条
+    <table id="result-table" class="ui-widget ui-widget-content">
+        <thead>
+        <tr class="ui-widget-header">
+            <th>发送时间</th>
+            <th>接收号码</th>
+            <th>发送内容</th>
+            <th>成功号码/总号码</th>
+        </tr>
+        </thead>
+        <tbody id="result-tbody">
+        </tbody>
+    </table>
+    <button type="submit" id="top" value="1" disabled="true">首页</button>
+    <button type="submit" id="previous" value="1" disabled="true">上一页</button>
+    <button type="submit" id="next" value="1" disabled="true">下一页</button>
+    <button type="submit" id="tail" value="1" disabled="true">尾页</button>
+</div>
+
+<div id="detailblock" hidden="true" title="短信明细">
+    <table>
+        <thead>
+        <tr>
+            <td>序号</td><td>被叫号码</td><td>回执信息</td>
+        </tr>
+        </thead>
+        <tbody id="smsdetail-body">
+        </tbody>
+    </table>
+</div>
+<div id="token" hidden="true"></div>
+</body>
+</html>

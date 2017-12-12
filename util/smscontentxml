@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="GB2312"?>
+<RequestData TransactionID="291F7FC885E84442AC711FA1CFD52DB3"
+  RequestTime="20121027102811" ServiceType="SMSContentGet" Version="2.9.4.0"
+ Account="account"  Ticket="ticket" VersionType="versiontype"
+   ClientInfo="1.0" ClientDesc="201192.168.24.8630325143738">
+   <SMSType>100</SMSType>  <StartIndex>startindex</StartIndex>      <EndIndex>endindex</EndIndex>
+   <PhoneNumber></PhoneNumber>     <StartTime>startime 00:00:00</StartTime>
+   <EndTime>endtime 23:59:59</EndTime>
+   <AccountPhone>accountphone</AccountPhone>
+</RequestData>

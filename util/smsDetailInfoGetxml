@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="GB2312"?>
+<RequestData TransactionID="291F7FC885E84442AC711FA1CFD52DB3"
+	RequestTime="20091027102811" ServiceType="SMSDetailInfoGet" Version="2.1.0.0"
+	Account="account"
+	Ticket="ticket" VersionType="versiontype">
+    <SMSID>smsid</SMSID>
+    <AccountPhone>accountphone</AccountPhone>
+   	<StartTime>starttime 00:00:00</StartTime>
+	<StartIndex>1</StartIndex>
+	<EndIndex>1000</EndIndex>
+</RequestData>
