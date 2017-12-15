@@ -5,7 +5,7 @@ from smsquery.util import ecpsms
 
 VIP_LISTS = {'10.240.80.31': {'NAME': '周峰', 'KEY': '68gk#$%3577dghvj3fg64'},
              '10.240.80.5': {'NAME': '李静子', 'KEY': 'vb34i%#$udg$@j32%8123'},
-             '10.240.80.28': {'NAME': '明师傅', 'KEY': 'msf@#$%WEG#@$1234'}
+             '10.240.80.28': {'NAME': '金林华', 'KEY': '12345@#$%12345'}
 }
 
 
